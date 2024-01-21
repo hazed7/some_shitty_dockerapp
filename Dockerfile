@@ -1,8 +1,11 @@
 FROM python:3
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/
 
-COPY app/ .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY app/requirements.txt app/requirements.txt
 
-CMD ["python", "./main.py"]
+RUN pip install --no-cache-dir -r app/requirements.txt
+
+COPY app/ app/
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

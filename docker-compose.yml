@@ -1,9 +1,10 @@
 version: '3.8'
 services:
   db:
-    image: postgres:latest
+    image: postgres:13
     volumes:
       - ./db:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -13,32 +14,44 @@ services:
     networks:
       - backend
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     secrets:
       - postgres_password
 
+  backup:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+
   app:
     build: .
+    ports:
+      - "8000:8000"
     depends_on:
       - db
+    env_file:
+      - .env
     networks:
       - backend
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        mode: non-blocking
 
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    networks:
-      - backend
-
-  grafana:
-    image: grafana/grafana
-    ports:
-      - "3000:3000"
-    networks:
-      - backend
+volumes:
+  pgdata:
 
 secrets:
   postgres_password:

@@ -5,8 +5,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE persons (
 	person_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 	full_name VARCHAR(255) NOT NULL,
-	phone_number VARCHAR(50) UNIQUE,
-	date_of_birth DATE,
+	phone_number VARCHAR(50) UNIQUE NOT NULL,
+	date_of_birth DATE NOT NULL,
 	consent_to_personal_data BOOLEAN NOT NULL DEFAULT FALSE
 );
 
@@ -15,11 +15,12 @@ CREATE TYPE document_type AS ENUM ('identity', 'education', 'certificates', 'car
 
 -- Documents Table
 CREATE TABLE documents (
-	document_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+	document_id UUID NOT NULL DEFAULT uuid_generate_v4(),
 	person_id UUID NOT NULL,
 	document_type document_type NOT NULL,
 	start_date DATE,
 	end_date DATE,
+	CONSTRAINT documents_pkey PRIMARY KEY (document_id, document_type),
 	CONSTRAINT fk_person_document
 		FOREIGN KEY(person_id)
 		REFERENCES persons(person_id)
